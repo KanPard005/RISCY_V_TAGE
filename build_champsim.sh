@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ "$#" -ne 7 ]; then
+if [ "$#" -ne 8 ]; then
     echo "Illegal number of parameters"
-    echo "Usage: ./build_champsim.sh [branch_pred] [l1d_pref] [l2c_pref] [llc_pref] [llc_repl] [num_core]"
+    echo "Usage: ./build_champsim.sh [branch_pred] [l1i_pref] [l1d_pref] [l2c_pref] [llc_pref] [llc_repl] [num_core] [binary_name]"
     exit 1
 fi
 
@@ -14,6 +14,7 @@ L2C_PREFETCHER=$4   # prefetcher/*.l2c_pref
 LLC_PREFETCHER=$5   # prefetcher/*.llc_pref
 LLC_REPLACEMENT=$6  # replacement/*.llc_repl
 NUM_CORE=$7         # tested up to 8-core system
+BINARY_NAME=$8
 
 ############## Some useful macros ###############
 BOLD=$(tput bold)
@@ -116,7 +117,6 @@ echo "L2C Prefetcher: ${L2C_PREFETCHER}"
 echo "LLC Prefetcher: ${LLC_PREFETCHER}"
 echo "LLC Replacement: ${LLC_REPLACEMENT}"
 echo "Cores: ${NUM_CORE}"
-BINARY_NAME="${BRANCH}-${L1I_PREFETCHER}-${L1D_PREFETCHER}-${L2C_PREFETCHER}-${LLC_PREFETCHER}-${LLC_REPLACEMENT}-${NUM_CORE}core"
 echo "Binary: bin/${BINARY_NAME}"
 echo ""
 mv bin/champsim bin/${BINARY_NAME}
