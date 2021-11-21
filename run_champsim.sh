@@ -6,7 +6,7 @@ if [ "$#" -lt 4 ]; then
     exit 1
 fi
 
-TRACE_DIR=$PWD/dpc3_traces
+TRACE_DIR=../traces/
 BINARY=${1}
 N_WARM=${2}
 N_SIM=${3}
