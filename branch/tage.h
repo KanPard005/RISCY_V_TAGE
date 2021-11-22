@@ -2,15 +2,16 @@
 
 #define TAGE_BIMODAL_TABLE_SIZE 16384
 #define TAGE_PREDICTOR_TABLE_SIZE 1024
-#define TAGE_NUM_COMPONENTS 4
+#define TAGE_NUM_COMPONENTS 12
 #define TAGE_BASE_COUNTER_BITS 2
 #define TAGE_COUNTER_BITS 3
 #define TAGE_USEFUL_BITS 2
 #define TAGE_TAG_BITS 9
-#define TAGE_HISTORY_BUFFER_LENGTH 1024
-#define TAGE_MIN_HISTORY_LENGTH 10
-#define TAGE_HISTORY_ALPHA 2
-#define TAGE_RESET_USEFUL_INTERVAL 256000
+#define TAGE_GLOBAL_HISTORY_BUFFER_LENGTH 1024
+#define TAGE_PATH_HISTORY_BUFFER_LENGTH 32
+#define TAGE_MIN_HISTORY_LENGTH 4
+#define TAGE_HISTORY_ALPHA 1.6
+#define TAGE_RESET_USEFUL_INTERVAL 512000
 
 struct tage_predictor_table_entry
 {
@@ -26,7 +27,9 @@ private:
     int num_branches;
     int bimodal_table[TAGE_BIMODAL_TABLE_SIZE]; // range 0-3
     struct tage_predictor_table_entry predictor_table[TAGE_NUM_COMPONENTS][TAGE_PREDICTOR_TABLE_SIZE];
-    uint8_t global_history[TAGE_HISTORY_BUFFER_LENGTH];
+    uint8_t global_history[TAGE_GLOBAL_HISTORY_BUFFER_LENGTH];
+    uint8_t path_history[TAGE_PATH_HISTORY_BUFFER_LENGTH];
+
     int component_history_lengths[TAGE_NUM_COMPONENTS];
 
 public:
@@ -59,12 +62,11 @@ void Tage::init()
         }
     }
 
-    component_history_lengths[0] = TAGE_MIN_HISTORY_LENGTH;
-    int power = 1;
-    for (int i = 1; i < TAGE_NUM_COMPONENTS; i++)
+    double power = 1;
+    for (int i = 0; i < TAGE_NUM_COMPONENTS; i++)
     {
+        component_history_lengths[i] = int(TAGE_MIN_HISTORY_LENGTH * power + 0.5);
         power *= TAGE_HISTORY_ALPHA;
-        component_history_lengths[i] = int(component_history_lengths[i - 1] * power + 0.5);
     }
 
     num_branches = 0;
@@ -246,11 +248,18 @@ void Tage::update(uint64_t ip, uint8_t taken)
     }
 
     // update global history
-    for (int i = TAGE_HISTORY_BUFFER_LENGTH - 1; i > 0; i--)
+    for (int i = TAGE_GLOBAL_HISTORY_BUFFER_LENGTH - 1; i > 0; i--)
     {
         global_history[i] = global_history[i - 1];
     }
     global_history[0] = taken;
+
+    // update path history
+    for (int i = TAGE_PATH_HISTORY_BUFFER_LENGTH - 1; i > 0; i--)
+    {
+        path_history[i] = path_history[i - 1];
+    }
+    path_history[0] = ip & 1;
 
     num_branches++;
     if (num_branches % TAGE_RESET_USEFUL_INTERVAL == 0)
@@ -258,7 +267,7 @@ void Tage::update(uint64_t ip, uint8_t taken)
         num_branches = 0;
         for (int i = 0; i < TAGE_NUM_COMPONENTS; i++)
         {
-            for (int j = 0; j < TAGE_PREDICTOR_TABLE_SIZE; i++)
+            for (int j = 0; j < TAGE_PREDICTOR_TABLE_SIZE; j++)
             {
                 predictor_table[i][j].useful >>= 1;
             }
@@ -289,7 +298,7 @@ uint16_t Tage::get_predictor_index(uint64_t ip, int component)
     }
     compressed_history ^= temporary_history;
 
-    return (compressed_history ^ ip) & (TAGE_PREDICTOR_TABLE_SIZE - 1);
+    return (compressed_history ^ ip ^ (ip >> compressed_history_length)) & (TAGE_PREDICTOR_TABLE_SIZE - 1);
 }
 
 uint16_t Tage::get_tag(uint64_t ip, int component)
