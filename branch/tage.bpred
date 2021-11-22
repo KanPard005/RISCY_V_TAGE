@@ -1,0 +1,41 @@
+#include <ooo_cpu.h>
+
+#define BIMODAL_TABLE_SIZE 16384
+#define PREDICTOR_TABLE_SIZE 1024  
+#define CTR_SIZE 3
+#define U_SIZE 2
+
+int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE]
+
+class predictor
+{
+private:
+    /* data */
+public:
+    tage(/* args */);
+    ~tage();
+};
+
+tage::tage(/* args */)
+{
+}
+
+tage::~tage()
+{
+}
+
+
+void O3_CPU::initialize_branch_predictor()
+{
+    
+}
+
+uint8_t O3_CPU::predict_branch(uint64_t ip)
+{
+    
+}
+
+void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
+{
+    
+}
