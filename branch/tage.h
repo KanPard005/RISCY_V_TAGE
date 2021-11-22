@@ -150,6 +150,31 @@ void Tage::update(uint32_t cpu, uint64_t ip, uint8_t taken){
         else{
             if (bimodal_table[cpu][index] > 0) bimodal_table[cpu][index]--;
         }
+
+
+        // allocate tagged entries on misprediction
+        
+        uint8_t pred = (bimodal_table[cpu][index] >= 2) ? 1 : 0;
+        if (pred != taken){
+            uint8_t rand = random();
+            int Y = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_component)) - 1);
+            int X = pred_component + 1;
+
+            if (Y & 1){
+                X++;
+                if (Y & 2){
+                    X++;
+                }
+            }
+
+            for (int i = X; i <= TAGE_NUM_COMPONENTS; i++){
+                struct tage_predictor_table_entry* entry = &predictor_table[cpu][X-1][get_predictor_index(cpu, ip, X)];
+                if (entry->useful == 0){
+                    entry->tag = get_tag(cpu, ip, X);
+                    entry->ctr = (entry->ctr >= 4) ? 1 : 0;
+                }
+            }
+        }
     }
 
     // update global history
