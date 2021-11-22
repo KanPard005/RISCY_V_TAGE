@@ -29,7 +29,7 @@ private:
     struct tage_predictor_table_entry predictor_table[TAGE_NUM_COMPONENTS][TAGE_PREDICTOR_TABLE_SIZE];
     uint8_t global_history[TAGE_GLOBAL_HISTORY_BUFFER_LENGTH];
     uint8_t path_history[TAGE_PATH_HISTORY_BUFFER_LENGTH];
-
+    uint8_t use_alt_on_na;  // 4 bit counter
     int component_history_lengths[TAGE_NUM_COMPONENTS];
 
 public:
@@ -48,6 +48,7 @@ public:
 
 void Tage::init()
 {
+    use_alt_on_na = 8;
     for (int i = 0; i < TAGE_BIMODAL_TABLE_SIZE; i++)
     {
         bimodal_table[i] = (1 << (TAGE_BASE_COUNTER_BITS - 1)); // weakly taken
@@ -76,7 +77,7 @@ uint8_t Tage::predict(uint64_t ip)
 {
 
     int provider = get_match_below_n(ip, TAGE_NUM_COMPONENTS + 1);
-    //int alternate = get_match_below_n(cpu, ip, provider);
+    int alternate = get_match_below_n(ip, provider);
     if (provider == 0)
     {
         uint16_t index = get_bimodal_index(ip);
@@ -85,7 +86,13 @@ uint8_t Tage::predict(uint64_t ip)
     else
     {
         uint16_t index = get_predictor_index(ip, provider);
-        return predictor_table[provider - 1][index].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
+        if (use_alt_on_na < 0 || abs(2*predictor_table[provider - 1][index].ctr - ((1 << (TAGE_COUNTER_BITS))-1)) > 1){
+            return predictor_table[provider - 1][index].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
+        }
+        else{
+            return predictor_table[alternate - 1][get_predictor_index(ip, alternate)].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
+        }
+        
     }
 }
 
@@ -153,11 +160,15 @@ void Tage::update(uint64_t ip, uint8_t taken)
             {
                 if (entry->useful < ((1 << TAGE_USEFUL_BITS) - 1))
                     entry->useful++;
+                if (use_alt_on_na > 0)
+                    use_alt_on_na--;
             }
             else
             {
                 if (entry->useful > 0)
                     entry->useful--;
+                if (use_alt_on_na < 15)
+                    use_alt_on_na++;
             }
         }
 
