@@ -2,7 +2,7 @@
 
 #define TAGE_BIMODAL_TABLE_SIZE 16384
 #define TAGE_PREDICTOR_TABLE_SIZE 1024
-#define TAGE_NUM_COMPONENTS 5
+#define TAGE_NUM_COMPONENTS 4
 #define TAGE_BASE_COUNTER_BITS 2
 #define TAGE_COUNTER_BITS 3  
 #define TAGE_USEFUL_BITS 2
@@ -198,7 +198,7 @@ void Tage::update(uint32_t cpu, uint64_t ip, uint8_t taken){
     }
 
     // update global history
-    for (int i=TAGE_HISTORY_LENGTH-1; i>1; i--){
+    for (int i=TAGE_HISTORY_BUFFER_LENGTH-1; i>1; i--){
         global_history[cpu][i] = global_history[cpu][i-1];
     }
     global_history[cpu][0] = taken;
