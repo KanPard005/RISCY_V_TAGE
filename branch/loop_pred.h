@@ -22,20 +22,20 @@ class LoopPred {
   int ind;       // Index in loop
   int hit;       // The way in the loop where we get a hit
   int ptag;      // The tag calculated
-  bool is_valid; // Validity of prediction
   uint8_t seed;
 
 public:
+  bool is_valid; // Validity of prediction
   bool loop_pred;   // The prediction returned for current PC
   int loop_correct; // Counter which gives us global accuracy of loop predictor
 
-  LoopPred();
-  bool get_pred(int pc);
+  void init();
+  uint8_t get_pred(uint64_t pc);
   void update_entry(bool taken, bool tage_pred);
   void ctr_update(bool taken);
 };
 
-LoopPred::LoopPred() {
+void LoopPred::init() {
   loop_correct = 0;
   seed = 0;
   for (int i = 0; i < ENTRIES; i++) {
@@ -47,7 +47,7 @@ LoopPred::LoopPred() {
   }
 }
 
-bool LoopPred::get_pred(int pc) {
+uint8_t LoopPred::get_pred(uint64_t pc) {
   hit = -1;
 
   // Calculate index
@@ -64,17 +64,17 @@ bool LoopPred::get_pred(int pc) {
       is_valid = (table[i].confidence == 3);
       if (table[i].current_iter + 1 == table[i].past_iter) {
         loop_pred = true;
-        return true;
+        return 1;
       }
       loop_pred = false;
-      return false;
+      return 0;
     }
   }
 
   // No matching entry found in table; returning false
   is_valid = false;
   loop_pred = false;
-  return false;
+  return 0;
 }
 
 void LoopPred::update_entry(bool taken, bool tage_pred)
