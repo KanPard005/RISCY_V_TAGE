@@ -17,7 +17,8 @@ uint8_t O3_CPU::predict_branch(uint64_t ip)
 {
     uint32_t hash = ip % BIMODAL_PRIME;
     uint8_t prediction = (bimodal_table[cpu][hash] >= ((MAX_COUNTER + 1)/2)) ? 1 : 0;
-
+    abs(1);
+    pow(2,3);
     return prediction;
 }
 
