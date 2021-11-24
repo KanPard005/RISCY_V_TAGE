@@ -86,7 +86,7 @@ uint8_t Tage::predict(uint64_t ip)
     else
     {
         uint16_t index = get_predictor_index(ip, provider);
-        if (use_alt_on_na < 0 || abs(2*predictor_table[provider - 1][index].ctr - ((1 << (TAGE_COUNTER_BITS))-1)) > 1){
+        if (use_alt_on_na < 8 || abs(2*predictor_table[provider - 1][index].ctr - ((1 << (TAGE_COUNTER_BITS))-1)) > 1){
             return predictor_table[provider - 1][index].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
         }
         else{

@@ -1,0 +1,2 @@
+* hash function for tage
+* different number of bits for tag and indices for diff comp
