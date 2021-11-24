@@ -63,11 +63,11 @@ uint8_t LoopPred::get_pred(uint64_t pc) {
       hit = i;
       is_valid = (table[i].confidence == 3);
       if (table[i].current_iter + 1 == table[i].past_iter) {
-        loop_pred = true;
-        return 1;
+        loop_pred = false;
+        return 0;
       }
-      loop_pred = false;
-      return 0;
+      loop_pred = true;
+      return 1;
     }
   }
 
@@ -82,10 +82,12 @@ void LoopPred::update_entry(bool taken, bool tage_pred)
   if (hit >= 0) {
     Entry &entry = table[ind + hit];
     if (is_valid) {
+      if (tage_pred != loop_pred) ctr_update(taken);
       if (taken != loop_pred) {
         entry.past_iter = 0;
         entry.age = 0;
         entry.confidence = 0;
+        entry.current_iter = 0;
         return;
       }
 
@@ -99,7 +101,7 @@ void LoopPred::update_entry(bool taken, bool tage_pred)
     entry.current_iter &= ((1 << ITERSIZE) - 1);
 
     if (entry.current_iter > entry.past_iter) {
-      // entry.confidence = 0; // TODO: check what this does
+      entry.confidence = 0;
       if (entry.past_iter != 0) {
         entry.past_iter = 0;
         entry.age = 0;
@@ -111,7 +113,7 @@ void LoopPred::update_entry(bool taken, bool tage_pred)
       if (entry.current_iter == entry.past_iter) {
         if (entry.confidence < 3) entry.confidence++;
         // TODO: check for current iter in else on 118 instead of past here
-        if ((entry.past_iter > 0) && (entry.past_iter < 3)) { // TODO: check for past or current iter
+        if ((entry.past_iter > 0) && (entry.past_iter < 3)) {
           entry.past_iter = 0;
           entry.age = 0;
           entry.confidence = 0;
@@ -143,14 +145,14 @@ void LoopPred::update_entry(bool taken, bool tage_pred)
         table[j].confidence = 0;
         break;
       }
-      else table[i].age--;
+      else table[j].age--;
     }
   }
 }
 
 void LoopPred::ctr_update (bool taken) {
   if (taken == loop_pred) {
-    if (loop_correct < 1023) loop_correct++;
+    if (loop_correct < 127) loop_correct++;
   }
-  else if (loop_correct > -1023) loop_correct--;
+  else if (loop_correct > -127) loop_correct--;
 }
