@@ -4,7 +4,16 @@
 
 Tage tage_predictor[NUM_CPUS];
 LoopPred loop_predictor[NUM_CPUS];
-uint8_t tage_prediction;
+
+int loop_correct[NUM_CPUS] = {0};
+uint8_t tage_pred[NUM_CPUS], loop_pred[NUM_CPUS];
+
+void ctr_update (uint8_t taken, uint32_t cpu) {
+    if (taken == loop_pred[cpu]) {
+        if (loop_correct[cpu] < 127) loop_correct[cpu]++;
+    }
+    else if (loop_correct[cpu] > -127) loop_correct[cpu]--;
+}
 
 void O3_CPU::initialize_branch_predictor() {
     tage_predictor[cpu].init();
@@ -12,15 +21,15 @@ void O3_CPU::initialize_branch_predictor() {
 }
 
 uint8_t O3_CPU::predict_branch(uint64_t ip) {
-    bool res_loop = loop_predictor[cpu].get_pred(ip);
-    bool res_tage = tage_predictor[cpu].predict(ip);
-    tage_prediction = res_tage;
-    if ((loop_predictor[cpu].is_valid) && (loop_predictor[cpu].loop_correct >= 0)) 
-        return res_loop;
-    return res_tage;
+    loop_pred[cpu] = loop_predictor[cpu].get_pred(ip);
+    tage_pred[cpu] = tage_predictor[cpu].predict(ip);
+    if ((loop_predictor[cpu].is_valid) && (loop_correct[cpu] >= 0)) 
+        return loop_pred[cpu];
+    return tage_pred[cpu];
 }
 
 void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken) {
     tage_predictor[cpu].update(ip, taken);
-    loop_predictor[cpu].update_entry(taken, tage_prediction);
+    loop_predictor[cpu].update_entry(taken, tage_pred[cpu]);
+    ctr_update(taken, cpu);
 }

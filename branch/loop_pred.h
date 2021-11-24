@@ -26,17 +26,14 @@ class LoopPred {
 
 public:
   bool is_valid; // Validity of prediction
-  bool loop_pred;   // The prediction returned for current PC
-  int loop_correct; // Counter which gives us global accuracy of loop predictor
+  uint8_t loop_pred;   // The prediction returned for current PC
 
   void init();
   uint8_t get_pred(uint64_t pc);
-  void update_entry(bool taken, bool tage_pred);
-  void ctr_update(bool taken);
+  void update_entry(uint8_t taken, uint8_t tage_pred);
 };
 
 void LoopPred::init() {
-  loop_correct = 0;
   seed = 0;
   for (int i = 0; i < ENTRIES; i++) {
     table[i].tag = 0;
@@ -63,26 +60,25 @@ uint8_t LoopPred::get_pred(uint64_t pc) {
       hit = i;
       is_valid = (table[i].confidence == 3);
       if (table[i].current_iter + 1 == table[i].past_iter) {
-        loop_pred = false;
+        loop_pred = 0;
         return 0;
       }
-      loop_pred = true;
+      loop_pred = 1;
       return 1;
     }
   }
 
   // No matching entry found in table; returning false
   is_valid = false;
-  loop_pred = false;
+  loop_pred = 0;
   return 0;
 }
 
-void LoopPred::update_entry(bool taken, bool tage_pred)
+void LoopPred::update_entry(uint8_t taken, uint8_t tage_pred)
 {
   if (hit >= 0) {
     Entry &entry = table[ind + hit];
     if (is_valid) {
-      if (tage_pred != loop_pred) ctr_update(taken);
       if (taken != loop_pred) {
         entry.past_iter = 0;
         entry.age = 0;
@@ -148,11 +144,4 @@ void LoopPred::update_entry(bool taken, bool tage_pred)
       else table[j].age--;
     }
   }
-}
-
-void LoopPred::ctr_update (bool taken) {
-  if (taken == loop_pred) {
-    if (loop_correct < 127) loop_correct++;
-  }
-  else if (loop_correct > -127) loop_correct--;
 }
