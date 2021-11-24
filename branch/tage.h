@@ -1,17 +1,19 @@
 #include "ooo_cpu.h"
 
 #define TAGE_BIMODAL_TABLE_SIZE 16384
-#define TAGE_PREDICTOR_TABLE_SIZE 1024
+#define TAGE_MAX_INDEX_BITS 12
 #define TAGE_NUM_COMPONENTS 12
 #define TAGE_BASE_COUNTER_BITS 2
 #define TAGE_COUNTER_BITS 3
 #define TAGE_USEFUL_BITS 2
-#define TAGE_TAG_BITS 9
 #define TAGE_GLOBAL_HISTORY_BUFFER_LENGTH 1024
 #define TAGE_PATH_HISTORY_BUFFER_LENGTH 32
 #define TAGE_MIN_HISTORY_LENGTH 4
 #define TAGE_HISTORY_ALPHA 1.6
 #define TAGE_RESET_USEFUL_INTERVAL 512000
+
+const uint8_t TAGE_INDEX_BITS[TAGE_NUM_COMPONENTS] = {10, 10, 11, 11, 11, 11, 10, 10, 10, 10, 9, 9};
+const uint8_t TAGE_TAG_BITS[TAGE_NUM_COMPONENTS] = {7, 7, 8, 8, 9, 10, 11, 12, 12, 13, 14, 15};
 
 struct tage_predictor_table_entry
 {
@@ -26,7 +28,7 @@ private:
     /* data */
     int num_branches;
     int bimodal_table[TAGE_BIMODAL_TABLE_SIZE]; // range 0-3
-    struct tage_predictor_table_entry predictor_table[TAGE_NUM_COMPONENTS][TAGE_PREDICTOR_TABLE_SIZE];
+    struct tage_predictor_table_entry predictor_table[TAGE_NUM_COMPONENTS][(1 << TAGE_MAX_INDEX_BITS)];
     uint8_t global_history[TAGE_GLOBAL_HISTORY_BUFFER_LENGTH];
     uint8_t path_history[TAGE_PATH_HISTORY_BUFFER_LENGTH];
     uint8_t use_alt_on_na;  // 4 bit counter
@@ -55,7 +57,7 @@ void Tage::init()
     }
     for (int i = 0; i < TAGE_NUM_COMPONENTS; i++)
     {
-        for (int j = 0; j < TAGE_PREDICTOR_TABLE_SIZE; j++)
+        for (int j = 0; j < (1 << TAGE_INDEX_BITS[i]); j++)
         {
             predictor_table[i][j].ctr = (1 << (TAGE_COUNTER_BITS - 1)); // weakly taken
             predictor_table[i][j].useful = 0;                           // not useful
@@ -276,7 +278,7 @@ void Tage::update(uint64_t ip, uint8_t taken)
         num_branches = 0;
         for (int i = 0; i < TAGE_NUM_COMPONENTS; i++)
         {
-            for (int j = 0; j < TAGE_PREDICTOR_TABLE_SIZE; j++)
+            for (int j = 0; j < (1 << TAGE_INDEX_BITS[i]); j++)
             {
                 predictor_table[i][j].useful >>= 1;
             }
@@ -295,7 +297,7 @@ uint16_t Tage::get_predictor_index(uint64_t ip, int component)
 
     uint16_t compressed_history = 0;
     uint16_t temporary_history = 0;
-    int compressed_history_length = lg2(TAGE_PREDICTOR_TABLE_SIZE);
+    int compressed_history_length = TAGE_INDEX_BITS[component];
     for (int i = 0; i < component_history_lengths[component]; i++)
     {
         if (i % compressed_history_length == 0)
@@ -307,7 +309,7 @@ uint16_t Tage::get_predictor_index(uint64_t ip, int component)
     }
     compressed_history ^= temporary_history;
 
-    return (compressed_history ^ ip ^ (ip >> compressed_history_length)) & (TAGE_PREDICTOR_TABLE_SIZE - 1);
+    return (compressed_history ^ ip ^ (ip >> compressed_history_length)) & ((1 << TAGE_INDEX_BITS[component]) - 1);
 }
 
 uint16_t Tage::get_tag(uint64_t ip, int component)
@@ -316,7 +318,7 @@ uint16_t Tage::get_tag(uint64_t ip, int component)
 
     uint16_t compressed_history = 0;
     uint16_t temporary_history = 0;
-    int compressed_history_length = TAGE_TAG_BITS;
+    int compressed_history_length = TAGE_TAG_BITS[component];
     for (int i = 0; i < component_history_lengths[component]; i++)
     {
         if (i % compressed_history_length == 0)
@@ -328,7 +330,7 @@ uint16_t Tage::get_tag(uint64_t ip, int component)
     }
     compressed_history ^= temporary_history;
 
-    return (compressed_history ^ ip) & ((1 << TAGE_TAG_BITS) - 1);
+    return (compressed_history ^ ip) & ((1 << TAGE_TAG_BITS[component]) - 1);
 }
 
 int Tage::get_match_below_n(uint64_t ip, int component)
