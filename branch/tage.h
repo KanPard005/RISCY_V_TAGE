@@ -86,11 +86,19 @@ uint8_t Tage::predict(uint64_t ip)
     else
     {
         uint16_t index = get_predictor_index(ip, provider);
-        if (use_alt_on_na < 8 || abs(2*predictor_table[provider - 1][index].ctr - ((1 << (TAGE_COUNTER_BITS))-1)) > 1){
+        if (use_alt_on_na < 8 || abs(2*predictor_table[provider - 1][index].ctr + 1 - (1 << TAGE_COUNTER_BITS)) > 1){
             return predictor_table[provider - 1][index].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
         }
         else{
-            return predictor_table[alternate - 1][get_predictor_index(ip, alternate)].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
+            if(alternate == 0)
+            {
+                uint16_t index = get_bimodal_index(ip);
+                return bimodal_table[index] >= (1 << (TAGE_BASE_COUNTER_BITS - 1));
+            }
+            else
+            {
+                return predictor_table[alternate - 1][get_predictor_index(ip, alternate)].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
+            }
         }
         
     }
@@ -183,34 +191,6 @@ void Tage::update(uint64_t ip, uint8_t taken)
             if (entry->ctr > 0)
                 entry->ctr--;
         }
-
-        // allocate tagged entries on misprediction
-
-        if (pred != taken)
-        {
-            uint8_t rand = random();
-            int Y = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_component - 1)) - 1);
-            int X = pred_component + 1;
-
-            if (Y & 1)
-            {
-                X++;
-                if (Y & 2)
-                {
-                    X++;
-                }
-            }
-
-            for (int i = X; i <= TAGE_NUM_COMPONENTS; i++)
-            {
-                struct tage_predictor_table_entry *entry_new = &predictor_table[X - 1][get_predictor_index(ip, X)];
-                if (entry_new->useful == 0)
-                {
-                    entry_new->tag = get_tag(ip, X);
-                    entry_new->ctr = (1 << (TAGE_COUNTER_BITS - 1));
-                }
-            }
-        }
     }
 
     else
@@ -228,32 +208,50 @@ void Tage::update(uint64_t ip, uint8_t taken)
                 bimodal_table[index]--;
         }
 
-        // allocate tagged entries on misprediction
+        pred = (bimodal_table[index] >= (1 << (TAGE_BASE_COUNTER_BITS - 1))) ? 1 : 0;
+    }
 
-        uint8_t pred = (bimodal_table[index] >= (1 << (TAGE_BASE_COUNTER_BITS - 1))) ? 1 : 0;
-        if (pred != taken)
+    // allocate tagged entries on misprediction
+    if (pred != taken)
+    {
+        uint8_t rand = random();
+        rand = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_component - 1)) - 1);
+        int start_component = pred_component + 1;
+
+        if (rand & 1)
         {
-            uint8_t rand = random();
-            int Y = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_component - 1)) - 1);
-            int X = pred_component + 1;
-
-            if (Y & 1)
+            start_component++;
+            if (rand & 2)
             {
-                X++;
-                if (Y & 2)
-                {
-                    X++;
-                }
+                start_component++;
             }
+        }
 
-            for (int i = X; i <= TAGE_NUM_COMPONENTS; i++)
+        ///////////////////Allocate atleast one entry if no free entry
+        int isFree = 0;
+        for (int i = pred_component + 1; i <= TAGE_NUM_COMPONENTS; i++)
+        {
+            struct tage_predictor_table_entry *entry_new = &predictor_table[i - 1][get_predictor_index(ip, i)];
+            if (entry_new->useful == 0)
             {
-                struct tage_predictor_table_entry *entry_new = &predictor_table[X - 1][get_predictor_index(ip, X)];
-                if (entry_new->useful == 0)
-                {
-                    entry_new->tag = get_tag(ip, X);
-                    entry_new->ctr = (1 << (TAGE_COUNTER_BITS - 1));
-                }
+                isFree = 1;
+            }
+        }
+
+        if (!isFree && start_component <= TAGE_NUM_COMPONENTS)
+        {
+            predictor_table[start_component - 1][get_predictor_index(ip, start_component)].useful = 0;
+        }
+        /////////////////////////////////////////////////////////////////////////////
+
+        for (int i = start_component; i <= TAGE_NUM_COMPONENTS; i++)
+        {
+            struct tage_predictor_table_entry *entry_new = &predictor_table[i - 1][get_predictor_index(ip, i)];
+            if (entry_new->useful == 0)
+            {
+                entry_new->tag = get_tag(ip, i);
+                entry_new->ctr = (1 << (TAGE_COUNTER_BITS - 1));
+                break;
             }
         }
     }
