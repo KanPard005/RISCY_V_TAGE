@@ -6,7 +6,7 @@
 #define LOGWAY 2
 #define TAGSIZE 14
 #define ITERSIZE 14
-#define AGE 63
+#define AGE 31
 
 struct Entry {
   uint16_t tag;          // Stores the 14-bit tag for the entry
@@ -14,6 +14,7 @@ struct Entry {
   uint16_t current_iter; // Stores the 14-bit count for the number of iterations seen currently
   uint8_t age;           // 8-bit counter signifying usefulness of entry
   uint8_t confidence;    // 2-bit counter signifying confidence in prediction
+  uint8_t dir; // direction of prediction
 };
 
 class LoopPred {
@@ -61,11 +62,11 @@ uint8_t LoopPred::get_pred(uint64_t pc) {
       hit = i;
       is_valid = (table[i].confidence == 3);
       if (table[i].current_iter + 1 == table[i].past_iter) {
-        loop_pred = 0;
-        return 0;
+        loop_pred = !table[i].dir;
+        return !table[i].dir;
       }
-      loop_pred = 1;
-      return 1;
+      loop_pred = table[i].dir;
+      return table[i].dir;
     }
   }
 
@@ -98,18 +99,24 @@ void LoopPred::update_entry(uint8_t taken, uint8_t tage_pred)
     entry.current_iter &= ((1 << ITERSIZE) - 1);
 
     if (entry.current_iter > entry.past_iter) {
+      // entry.confidence = 0;
+      // if (entry.past_iter != 0) {
+      //   entry.past_iter = 0;
+      //   entry.age = 0;
+      //   entry.confidence = 0;
+      // }
+
       entry.confidence = 0;
-      if (entry.past_iter != 0) {
-        entry.past_iter = 0;
-        entry.age = 0;
-        entry.confidence = 0;
-      }
+      entry.past_iter = 0;
     }
 
-    if (!taken) {
+    // if (!taken) {
+    if (taken != entry.dir) {
       if (entry.current_iter == entry.past_iter) {
         if (entry.confidence < 3) entry.confidence++;
+        // TODO: check for current iter in else on 118 instead of past here
         if ((entry.past_iter > 0) && (entry.past_iter < 3)) {
+          entry.dir = taken;
           entry.past_iter = 0;
           entry.age = 0;
           entry.confidence = 0;
@@ -122,7 +129,7 @@ void LoopPred::update_entry(uint8_t taken, uint8_t tage_pred)
         }
         else {
           entry.past_iter = 0;
-          entry.age = 0;
+          // entry.age = 0;
           entry.confidence = 0;
         }
       }
@@ -134,9 +141,11 @@ void LoopPred::update_entry(uint8_t taken, uint8_t tage_pred)
     for (int i = 0; i < WAY; i++) {
       int j = ind + ((seed + i) & 3);
       if (table[j].age == 0) {
+        table[j].dir = !taken;
         table[j].tag = ptag;
         table[j].past_iter = 0;
         table[j].current_iter = 1;
+        // table[j].age = 255;
         table[j].age = AGE;
         table[j].confidence = 0;
         break;

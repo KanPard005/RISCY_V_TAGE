@@ -17,8 +17,8 @@ for folder in columns:
         df_mpki.loc[file_name,folder] = float(re.compile(r'MPKI: \d+\.?\d*').search(text).group().split()[-1])
         df_accuracy.loc[file_name,folder] = float(re.compile("Branch Prediction Accuracy: \d+\.?\d*").search(text).group().split()[-1])
 
-df_mpki.to_csv("mpki.csv")
-df_accuracy.to_csv("accuracy.csv")
+df_mpki.to_csv("results/mpki.csv")
+df_accuracy.to_csv("results/accuracy.csv")
 
 print(df_mpki)
 print(df_accuracy)
