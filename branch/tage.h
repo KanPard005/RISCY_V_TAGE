@@ -2,6 +2,8 @@
 
 #define Tag uint16_t
 #define Index uint16_t
+#define Path uint64_t
+#define History uint64_t
 #define TAGE_BIMODAL_TABLE_SIZE 16384
 #define TAGE_MAX_INDEX_BITS 12
 #define TAGE_NUM_COMPONENTS 12
@@ -33,7 +35,7 @@ private:
     struct tage_predictor_table_entry predictor_table[TAGE_NUM_COMPONENTS][(1 << TAGE_MAX_INDEX_BITS)];
     uint8_t global_history[TAGE_GLOBAL_HISTORY_BUFFER_LENGTH];
     uint8_t path_history[TAGE_PATH_HISTORY_BUFFER_LENGTH];
-    uint8_t use_alt_on_na;  // 4 bit counter
+    uint8_t use_alt_on_na; // 4 bit counter
     int component_history_lengths[TAGE_NUM_COMPONENTS];
 
 public:
@@ -45,6 +47,8 @@ public:
     Index get_predictor_index(uint64_t ip, int component);
     Tag get_tag(uint64_t ip, int component);
     int get_match_below_n(uint64_t ip, int component);
+    Path get_path_history_hash(int component);
+    History get_compressed_global_history(int inSize, int outSize);
 
     Tage(/* args */);
     ~Tage();
@@ -90,11 +94,13 @@ uint8_t Tage::predict(uint64_t ip)
     else
     {
         Index index = get_predictor_index(ip, provider);
-        if (use_alt_on_na < 8 || abs(2*predictor_table[provider - 1][index].ctr + 1 - (1 << TAGE_COUNTER_BITS)) > 1){
+        if (use_alt_on_na < 8 || abs(2 * predictor_table[provider - 1][index].ctr + 1 - (1 << TAGE_COUNTER_BITS)) > 1)
+        {
             return predictor_table[provider - 1][index].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
         }
-        else{
-            if(alternate == 0)
+        else
+        {
+            if (alternate == 0)
             {
                 Index index = get_bimodal_index(ip);
                 return bimodal_table[index] >= (1 << (TAGE_BASE_COUNTER_BITS - 1));
@@ -104,7 +110,6 @@ uint8_t Tage::predict(uint64_t ip)
                 return predictor_table[alternate - 1][get_predictor_index(ip, alternate)].ctr >= (1 << (TAGE_COUNTER_BITS - 1));
             }
         }
-        
     }
 }
 
@@ -293,14 +298,31 @@ Index Tage::get_bimodal_index(uint64_t ip)
     return ip & (TAGE_BIMODAL_TABLE_SIZE - 1);
 }
 
-Index Tage::get_predictor_index(uint64_t ip, int component)
+Path Tage::get_path_history_hash(int component)
 {
-    component--;
+    Path A = 0;
+    int size = component_history_lengths[component - 1];
+    for (int i = TAGE_PATH_HISTORY_BUFFER_LENGTH - 1; i >= 0; i--)
+    {
+        A = (A << 1) | path_history[i];
+    }
+    A = A & ((1 << size) - 1);
+    Path A1;
+    Path A2;
+    A1 = A & ((1 << TAGE_INDEX_BITS[component - 1]) - 1);
+    A2 = A >> TAGE_INDEX_BITS[component - 1];
+    A2 = ((A2 << component) & ((1 << TAGE_INDEX_BITS[component - 1]) - 1)) + (A2 >> abs(TAGE_INDEX_BITS[component - 1] - component));
+    A = A1 ^ A2;
+    A = ((A << component) & ((1 << TAGE_INDEX_BITS[component - 1]) - 1)) + (A >> abs(TAGE_INDEX_BITS[component - 1] - component));
+    return (A);
+}
 
-    Index compressed_history = 0;
-    Index temporary_history = 0;
-    int compressed_history_length = TAGE_INDEX_BITS[component];
-    for (int i = 0; i < component_history_lengths[component]; i++)
+History Tage::get_compressed_global_history(int inSize, int outSize)
+{
+    History compressed_history = 0;
+    History temporary_history = 0;
+    int compressed_history_length = outSize;
+    for (int i = 0; i < inSize; i++)
     {
         if (i % compressed_history_length == 0)
         {
@@ -310,29 +332,22 @@ Index Tage::get_predictor_index(uint64_t ip, int component)
         temporary_history = (temporary_history << 1) | global_history[i];
     }
     compressed_history ^= temporary_history;
+    return compressed_history;
+}
 
-    return (compressed_history ^ ip ^ (ip >> compressed_history_length)) & ((1 << TAGE_INDEX_BITS[component]) - 1);
+Index Tage::get_predictor_index(uint64_t ip, int component)
+{
+    Path path_history_hash = get_path_history_hash(component);
+    History global_history_hash = get_compressed_global_history(component_history_lengths[component - 1], TAGE_INDEX_BITS[component - 1]);
+
+    return (global_history_hash ^ ip ^ (ip >> (abs(TAGE_INDEX_BITS[component - 1] - component) + 1)) ^ path_history_hash) & ((1 << TAGE_INDEX_BITS[component-1]) - 1);
 }
 
 Tag Tage::get_tag(uint64_t ip, int component)
 {
-    component--;
-
-    Tag compressed_history = 0;
-    Tag temporary_history = 0;
-    int compressed_history_length = TAGE_TAG_BITS[component];
-    for (int i = 0; i < component_history_lengths[component]; i++)
-    {
-        if (i % compressed_history_length == 0)
-        {
-            compressed_history ^= temporary_history;
-            temporary_history = 0;
-        }
-        temporary_history = (temporary_history << 1) | global_history[i];
-    }
-    compressed_history ^= temporary_history;
-
-    return (compressed_history ^ ip) & ((1 << TAGE_TAG_BITS[component]) - 1);
+    History global_history_hash = get_compressed_global_history(component_history_lengths[component - 1], TAGE_TAG_BITS[component - 1]);
+    global_history_hash ^= get_compressed_global_history(component_history_lengths[component - 1], TAGE_TAG_BITS[component - 1] - 1);
+    return (global_history_hash ^ ip) & ((1 << TAGE_TAG_BITS[component - 1]) - 1);
 }
 
 int Tage::get_match_below_n(uint64_t ip, int component)
