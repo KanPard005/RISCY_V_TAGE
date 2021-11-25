@@ -17,7 +17,7 @@ fi
 
 if [ ! -z $BUILD ]
 then
-    ./build_champsim.sh $1 no no no no lru 1 $1
+    ./build_champsim.sh ltage no no no no lru 1 $1
 fi
 
 pids=""
