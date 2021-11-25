@@ -9,27 +9,27 @@ LLC ways: 16
 Off-chip DRAM Size: 4096 MB Channels: 1 Width: 64-bit Data Rate: 3200 MT/s
 
 CPU 0 runs ../traces//server_036.champsimtrace.xz
-Heartbeat CPU 0 instructions: 10000000 cycles: 3457808 heartbeat IPC: 2.89201 cumulative IPC: 2.89201 (Simulation time: 0 hr 5 min 58 sec) 
+Heartbeat CPU 0 instructions: 10000000 cycles: 3457812 heartbeat IPC: 2.892 cumulative IPC: 2.892 (Simulation time: 0 hr 5 min 15 sec) 
 
-Warmup complete CPU 0 instructions: 10000004 cycles: 3457809 (Simulation time: 0 hr 5 min 58 sec) 
+Warmup complete CPU 0 instructions: 10000004 cycles: 3457813 (Simulation time: 0 hr 5 min 15 sec) 
 
-Heartbeat CPU 0 instructions: 20000000 cycles: 14444781 heartbeat IPC: 0.910169 cumulative IPC: 0.910169 (Simulation time: 0 hr 11 min 5 sec) 
-Finished CPU 0 instructions: 10000001 cycles: 10986975 cumulative IPC: 0.910169 (Simulation time: 0 hr 11 min 5 sec) 
+Heartbeat CPU 0 instructions: 20000000 cycles: 14420102 heartbeat IPC: 0.912218 cumulative IPC: 0.912218 (Simulation time: 0 hr 9 min 39 sec) 
+Finished CPU 0 instructions: 10000001 cycles: 10962292 cumulative IPC: 0.912218 (Simulation time: 0 hr 9 min 39 sec) 
 
 ChampSim completed all CPUs
 
 Region of Interest Statistics
 
-CPU 0 cumulative IPC: 0.910169 instructions: 10000001 cycles: 10986975
-L1D TOTAL     ACCESS:    3197378  HIT:    3196745  MISS:        633
-L1D LOAD      ACCESS:    1701255  HIT:    1701231  MISS:         24
+CPU 0 cumulative IPC: 0.912218 instructions: 10000001 cycles: 10962292
+L1D TOTAL     ACCESS:    3197375  HIT:    3196742  MISS:        633
+L1D LOAD      ACCESS:    1701252  HIT:    1701228  MISS:         24
 L1D RFO       ACCESS:    1496123  HIT:    1495514  MISS:        609
 L1D PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
 L1D WRITEBACK ACCESS:          0  HIT:          0  MISS:          0
 L1D PREFETCH  REQUESTED:          0  ISSUED:          0  USEFUL:          0  USELESS:          0
 L1D AVERAGE MISS LATENCY: 118.668 cycles
-L1I TOTAL     ACCESS:    1812762  HIT:    1046098  MISS:     766664
-L1I LOAD      ACCESS:    1812762  HIT:    1046098  MISS:     766664
+L1I TOTAL     ACCESS:    1814523  HIT:    1047859  MISS:     766664
+L1I LOAD      ACCESS:    1814523  HIT:    1047859  MISS:     766664
 L1I RFO       ACCESS:          0  HIT:          0  MISS:          0
 L1I PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
 L1I WRITEBACK ACCESS:          0  HIT:          0  MISS:          0
@@ -59,7 +59,7 @@ DRAM Statistics
 
  AVG_CONGESTED_CYCLE: 5
 
-CPU 0 Branch Prediction Accuracy: 98.9839% MPKI: 1.675 Average ROB Occupancy at Mispredict: 32.5901
+CPU 0 Branch Prediction Accuracy: 99.0898% MPKI: 1.5004 Average ROB Occupancy at Mispredict: 35.919
 
 Branch types
 NOT_BRANCH: 8351219 83.5122%

@@ -31,5 +31,5 @@ uint8_t O3_CPU::predict_branch(uint64_t ip) {
 void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken) {
     tage_predictor[cpu].update(ip, taken);
     loop_predictor[cpu].update_entry(taken, tage_pred[cpu]);
-    if (tage_pred[cpu] != loop_pred[cpu]) ctr_update(taken, cpu);
+    if (loop_predictor[cpu].is_valid && (tage_pred[cpu] != loop_pred[cpu])) ctr_update(taken, cpu);
 }

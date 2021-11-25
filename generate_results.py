@@ -11,7 +11,6 @@ df_accuracy = pd.DataFrame(np.random.randn(len(rows),len(columns)), index=rows, 
 
 for folder in columns:
     for file in os.listdir(folder):
-        print(folder, file)
         f = open(os.path.join(folder,file),'r')
         file_name = file[:10]
         text = f.read()
