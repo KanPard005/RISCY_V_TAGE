@@ -9,12 +9,12 @@ LLC ways: 16
 Off-chip DRAM Size: 4096 MB Channels: 1 Width: 64-bit Data Rate: 3200 MT/s
 
 CPU 0 runs ../traces//server_001.champsimtrace.xz
-Heartbeat CPU 0 instructions: 10000002 cycles: 3159709 heartbeat IPC: 3.16485 cumulative IPC: 3.16485 (Simulation time: 0 hr 0 min 43 sec) 
+Heartbeat CPU 0 instructions: 10000002 cycles: 3159709 heartbeat IPC: 3.16485 cumulative IPC: 3.16485 (Simulation time: 0 hr 2 min 43 sec) 
 
-Warmup complete CPU 0 instructions: 10000002 cycles: 3159709 (Simulation time: 0 hr 0 min 43 sec) 
+Warmup complete CPU 0 instructions: 10000002 cycles: 3159709 (Simulation time: 0 hr 2 min 43 sec) 
 
-Heartbeat CPU 0 instructions: 20000000 cycles: 14300372 heartbeat IPC: 0.897612 cumulative IPC: 0.897612 (Simulation time: 0 hr 1 min 39 sec) 
-Finished CPU 0 instructions: 10000001 cycles: 11140664 cumulative IPC: 0.897613 (Simulation time: 0 hr 1 min 39 sec) 
+Heartbeat CPU 0 instructions: 20000000 cycles: 14300372 heartbeat IPC: 0.897612 cumulative IPC: 0.897612 (Simulation time: 0 hr 5 min 22 sec) 
+Finished CPU 0 instructions: 10000001 cycles: 11140664 cumulative IPC: 0.897613 (Simulation time: 0 hr 5 min 22 sec) 
 
 ChampSim completed all CPUs
 
