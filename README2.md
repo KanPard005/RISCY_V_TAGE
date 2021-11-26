@@ -11,6 +11,8 @@ $ cd RISCY_V_TAGE
 ``` 
 - Download the traces from [here](https://drive.google.com/file/d/1qs8t8-YWc7lLoYbjbH_d3lf1xdoYBznf/view?usp=sharing) and extract them into a folder
 
+- You might want to follow instructions in the Champsim repository [here](https://github.com/ChampSim/ChampSim)
+
 - Execute the script ***run.sh*** to generate logs of all the traces for the specified branch predictor
 ```
 # Usage : ./run.sh [-b BUILD] [-g GENERATE_RESULTS] [-r RUN] [trace_dir] [branch_predictor] [binary_name OPTIONAL] [results_directory OPTIONAL]
@@ -22,7 +24,7 @@ $ ./run.sh -bgr ../traces ltage ltage_binary ltage_results
 - To compare results from two branch predictors, execute the following command
 
 ```
-# Usage : python3 generateResults.py [...DIR_NAMES] [RESULT_DIR] where DIR_NAMES is a list of directories where logs have been stored
+# Usage : python3 generate_results.py [...DIR_NAMES] [RESULT_DIR] where DIR_NAMES is a list of directories where logs have been stored
 # Example :
 $ python3 generate_results.py ./tage ./ltage ./hashed_perceptron ./results
 ```
