@@ -2,17 +2,22 @@
 
 if [ "$#" -lt 5 ]; then
     echo "Illegal number of parameters"
-    echo "Usage: ./run_champsim.sh [BINARY] [N_WARM] [N_SIM] [TRACE] [RESULT_DIR] [OPTION]"
+    echo "Usage: ./run_champsim.sh [BINARY] [N_WARM] [N_SIM] [TRACE] [RESULT_DIR] [TRACE_DIR] [OPTION]"
     exit 1
 fi
 
-TRACE_DIR=../traces/
 BINARY=${1}
 N_WARM=${2}
 N_SIM=${3}
 TRACE=${4}
 RESULT_DIR=${5}
-OPTION=${6}
+if [ -z $6 ]
+then
+    TRACE_DIR=../traces/
+else
+    TRACE_DIR=$6
+fi
+OPTION=${7}
 
 # Sanity check
 if [ -z $TRACE_DIR ] || [ ! -d "$TRACE_DIR" ] ; then

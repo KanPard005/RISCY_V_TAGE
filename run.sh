@@ -4,22 +4,22 @@ while getopts "bgr" flag
 do
     case "$flag" in
         b) BUILD="1";;
-        g) GENERATE="1";;
         r) RUN="1";;
     esac
 done
 
 shift $(($OPTIND - 1))
 
-if [ -z $1 ]
+if [ -z $1 || -z $2 ]
 then
-    echo "Usage : ./run.sh [-b BUILD] [-g GENERATE_RESULTS] [-r RUN] branch_predictor [binary_name] [results_directory]"
+    echo "Usage : ./run.sh [-b BUILD] [-r RUN] [trace_dir] [branch_predictor] [binary_name OPTIONAL] [results_directory OPTIONAL]"
     exit 1
 fi
 
-bpred=$1
-bin_name=$2
-results_dir=$3
+trace_dir=$1
+bpred=$2
+bin_name=$3
+results_dir=$4
 
 if [ -z $bin_name ]
 then
@@ -43,13 +43,13 @@ then
 
     for i in 1 2 3 4 9
     do  
-        ./run_champsim.sh $bin_name 10 10 server_00$i.champsimtrace.xz $results_dir &
+        ./run_champsim.sh $bin_name 10 10 server_00$i.champsimtrace.xz $results_dir $trace_dir &
         pids="$pids $!"
     done
 
     for i in {10..39}
     do  
-        ./run_champsim.sh $bin_name 10 10 server_0$i.champsimtrace.xz $results_dir &
+        ./run_champsim.sh $bin_name 10 10 server_0$i.champsimtrace.xz $results_dir $trace_dir &
         pids="$pids $!"
     done
 
@@ -57,9 +57,4 @@ then
     do
         wait $pid 
     done
-fi
-
-if [ ! -z $GENERATE ]
-then
-    python3 generate_results.py
 fi
