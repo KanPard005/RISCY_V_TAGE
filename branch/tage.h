@@ -42,20 +42,20 @@ private:
     int STRONG; //Strength of provider prediction counter of last branch PC
 
 public:
-    void init();
-    uint8_t predict(uint64_t ip);
-    void update(uint64_t ip, uint8_t taken);
+    void init();  // initialise the member variables
+    uint8_t predict(uint64_t ip);  // return the prediction from tage
+    void update(uint64_t ip, uint8_t taken);  // updates the state of tage
 
-    Index get_bimodal_index(uint64_t ip);
-    Index get_predictor_index(uint64_t ip, int component);
-    Tag get_tag(uint64_t ip, int component);
-    int get_match_below_n(uint64_t ip, int component);
-    void ctr_update(uint8_t &ctr, int cond, int low, int high);
-    uint8_t get_prediction(uint64_t ip, int comp);
-    Path get_path_history_hash(int component);
-    History get_compressed_global_history(int inSize, int outSize);
+    Index get_bimodal_index(uint64_t ip);   // helper hash function to index into the bimodal table
+    Index get_predictor_index(uint64_t ip, int component);   // helper hash function to index into the predictor table using histories
+    Tag get_tag(uint64_t ip, int component);   // helper hash function to get the tag of particular ip and component
+    int get_match_below_n(uint64_t ip, int component);   // helper function to find the hit component strictly before the component argument
+    void ctr_update(uint8_t &ctr, int cond, int low, int high);   // counter update helper function (including clipping)
+    uint8_t get_prediction(uint64_t ip, int comp);   // helper function for prediction
+    Path get_path_history_hash(int component);   // hepoer hash function to compress the path history
+    History get_compressed_global_history(int inSize, int outSize); // Compress global history of last 'inSize' branches into 'outSize' by wrapping the history
 
-    Tage(/* args */);
+    Tage();
     ~Tage();
 };
 
@@ -143,7 +143,10 @@ void Tage::ctr_update(uint8_t &ctr, int cond, int low, int high)
 
 void Tage::update(uint64_t ip, uint8_t taken)
 {
-    if (pred_comp > 0)
+    /*
+    function to update the state (member variables) of the tage class
+    */
+    if (pred_comp > 0)  // the predictor component is not the bimodal table
     {
         struct tage_predictor_table_entry *entry = &predictor_table[pred_comp - 1][get_predictor_index(ip, pred_comp)];
         uint8_t useful = entry->useful;
@@ -154,61 +157,61 @@ void Tage::update(uint64_t ip, uint8_t taken)
                 ctr_update(use_alt_on_na, !(pred == taken), 0, 15);
         }
 
-        if(alt_comp > 0)
+        if(alt_comp > 0)  // alternate component is not the bimodal table
         {
             struct tage_predictor_table_entry *alt_entry = &predictor_table[alt_comp - 1][get_predictor_index(ip, alt_comp)];
-            // update ctr for alternate predictor
             if(useful == 0)
-                ctr_update(alt_entry->ctr, taken, 0, ((1 << TAGE_COUNTER_BITS) - 1));
+                ctr_update(alt_entry->ctr, taken, 0, ((1 << TAGE_COUNTER_BITS) - 1)); // update ctr for alternate predictor if useful for predictor is 0
         }
         else
         {
-            // update ctr for alternate predictor
             Index index = get_bimodal_index(ip);
             if (useful == 0)
-                ctr_update(bimodal_table[index], taken, 0, ((1 << TAGE_BASE_COUNTER_BITS) - 1));
+                ctr_update(bimodal_table[index], taken, 0, ((1 << TAGE_BASE_COUNTER_BITS) - 1));  // update ctr for alternate predictor if useful for predictor is 0
         }
+
         // update u
         if (pred != alt_pred)
         {
             if (pred == taken)
             {
                 if (entry->useful < ((1 << TAGE_USEFUL_BITS) - 1))
-                    entry->useful++;
+                    entry->useful++;  // if prediction from preditor component was correct
             }
             else
             {
                 if(use_alt_on_na < 8)
                 {
                     if (entry->useful > 0)
-                        entry->useful--;
-                }
+                        entry->useful--;  // if prediction from altpred component was correct
+                } 
             }
         }
-        // update ctr for predictor
-        ctr_update(entry->ctr, taken, 0, ((1 << TAGE_COUNTER_BITS) - 1));
+
+        ctr_update(entry->ctr, taken, 0, ((1 << TAGE_COUNTER_BITS) - 1));  // update ctr for predictor component
     }
     else
     {
-        // update ctr for predictor
         Index index = get_bimodal_index(ip);
-        ctr_update(bimodal_table[index], taken, 0, ((1 << TAGE_BASE_COUNTER_BITS) - 1));
+        ctr_update(bimodal_table[index], taken, 0, ((1 << TAGE_BASE_COUNTER_BITS) - 1));  // update ctr for predictor if predictor is bimodal
     }
 
     // allocate tagged entries on misprediction
     if (tage_pred != taken)
     {
         long rand = random();
-        rand = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_comp - 1)) - 1);
+        rand = rand & ((1 << (TAGE_NUM_COMPONENTS - pred_comp - 1)) - 1);  
         int start_component = pred_comp + 1;
 
-        if (rand & 1)
+        //compute the start-component for search
+        if (rand & 1)  // 0.5 probability
         {
             start_component++;
-            if (rand & 2)
+            if (rand & 2)  // 0.25 probability
                 start_component++;
         }
-        ///////////////////Allocate atleast one entry if no free entry
+
+        //Allocate atleast one entry if no free entry
         int isFree = 0;
         for (int i = pred_comp + 1; i <= TAGE_NUM_COMPONENTS; i++)
         {
@@ -216,11 +219,11 @@ void Tage::update(uint64_t ip, uint8_t taken)
             if (entry_new->useful == 0)
                 isFree = 1;
         }
-
         if (!isFree && start_component <= TAGE_NUM_COMPONENTS)
             predictor_table[start_component - 1][get_predictor_index(ip, start_component)].useful = 0;
-        /////////////////////////////////////////////////////////////////////////////
-
+        
+        
+        // search for entry to steal from the start-component till end
         for (int i = start_component; i <= TAGE_NUM_COMPONENTS; i++)
         {
             struct tage_predictor_table_entry *entry_new = &predictor_table[i - 1][get_predictor_index(ip, i)];
@@ -242,7 +245,8 @@ void Tage::update(uint64_t ip, uint8_t taken)
     for (int i = TAGE_PATH_HISTORY_BUFFER_LENGTH - 1; i > 0; i--)
         path_history[i] = path_history[i - 1];
     path_history[0] = ip & 1;
-
+    
+    // graceful resetting of useful counter
     num_branches++;
     if (num_branches % TAGE_RESET_USEFUL_INTERVAL == 0)
     {
