@@ -30,16 +30,23 @@ $ python3 generate_results.py ./tage ./ltage ./hashed_perceptron ./results
 ```
 # Code Structure
 
-Since the implementation is made specific to Champsim simulator, the code structure for the same can be viewed from the source code of Champsim. Below is the description of files containing the implementation of the branch predictors.
+Since the implementation is made specific to Champsim simulator, the code structure is the same as the source code of Champsim.   
 
-| File                        | Description                                                                     |
-| [branch/loop_pred.h](branch/loop_pred.h)          | It implements loop predictor                                                    |
-| [branch/loop.h](branch/loop.h)               | It implements a variant of loop predictor component above                       |
-| [branch/ltage.bpred](branch/ltage.bpred)          | It implements the Champsim functions associated with branch prediction for LTAGE|
-| [branch/tage.bpred](branch/tage.bpred)           | It implements the Champsim functions associated with branch prediction for TAGE |
-| [branch/tage.h](branch/tage.h)               | It implements TAGE predictor                                                    |
+Below is the description of files containing the implementation of the branch predictors.
 
-- [ltage](ltage) contains results associated with ltage predictor for each server trace file.
-- [tage](tage) contains results associated with tage predictor for each server trace file.
-- [hashed_perceptron](hashed_perceptron) contains results associated with hashed perceptron predictor for each server trace file
-- [results](results) contains performance scores of each predictor
+| File                                          | Description                                                                           |
+| ---                                           | ---                                                                                   |                         
+| [branch/loop_pred.h](branch/loop_pred.h)      | It implements loop predictor                                                          |
+| [branch/loop.h](branch/loop.h)                | It implements a variant of loop predictor component above                             |
+| [branch/ltage.bpred](branch/ltage.bpred)      | It implements the Champsim functions associated with branch prediction for LTAGE      |
+| [branch/tage.bpred](branch/tage.bpred)        | It implements the Champsim functions associated with branch prediction for TAGE       |
+| [branch/tage.h](branch/tage.h)                | It implements TAGE predictor                                                          |
+
+Below is the description of folders containing the results of the branch predictors.
+
+| Folder                                        | Description                                                                           |
+| ---                                           | ---                                                                                   | 
+| [ltage](ltage)                                | contains results associated with ltage predictor for each server trace file.          |
+| [tage](tage)                                  | contains results associated with tage predictor for each server trace file.           |
+| [hashed_perceptron](hashed_perceptron)        | contains results associated with hashed perceptron predictor for each server trace file|
+| [results](results)                            | contains performance scores of each predictor                                         |
