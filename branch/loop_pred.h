@@ -170,7 +170,7 @@ void LoopPred::update_entry(uint8_t taken, uint8_t tage_pred)
                 table[j].confidence = 0;
                 break;
             }
-            else
+            else if (table[j].age > 0)
                 table[j].age--;
         }
     }
