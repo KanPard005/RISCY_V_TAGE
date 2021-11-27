@@ -15,9 +15,9 @@ $ cd RISCY_V_TAGE
 
 - Execute the script ***run.sh*** to generate logs of all the traces for the specified branch predictor
 ```
-# Usage : ./run.sh [-b BUILD] [-g GENERATE_RESULTS] [-r RUN] [trace_dir] [branch_predictor] [binary_name OPTIONAL] [results_directory OPTIONAL]
+# Usage : ./run.sh [-b BUILD] [-r RUN] [trace_dir] [branch_predictor] [binary_name OPTIONAL] [results_directory OPTIONAL]
 # example: 
-$ ./run.sh -bgr ../traces ltage ltage_binary ltage_results 
+$ ./run.sh -br ../traces ltage ltage_binary ltage_results 
 ```
 
 - The results will be created for each trace in the results directory specified.
@@ -50,3 +50,11 @@ Below is the description of folders containing the results of the branch predict
 | [tage](tage)                                  | contains results associated with tage predictor for each server trace file.           |
 | [hashed_perceptron](hashed_perceptron)        | contains results associated with hashed perceptron predictor for each server trace file|
 | [results](results)                            | contains performance scores of each predictor                                         |
+
+
+# References
+
+- [LTAGE Branch Predictor](https://jilp.org/vol9/v9paper6.pdf)
+- [TAGE Branch Predictor](https://jilp.org/vol9/v9paper6.pdf)
+- [CBP2 Source Files](https://hpca23.cse.tamu.edu/taco/camino/cbp2/source.html)
+- [CBP4 TAGE-SC-L Branch Predictor](https://jilp.org/cbp2014/program.html)
