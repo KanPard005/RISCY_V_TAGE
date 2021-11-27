@@ -23,10 +23,15 @@ def make_bar_plot(df, name_col, col1, col2, param, side):
     plt.show()
 
 def make_plot(df, name_col, col1, col2, param):
+    print(df.head(5))
     print('Mean improvement in {} for TAGE: {:.4f}%'.format(param, df[col1].mean()))
     print('Mean improvement in {} for LTAGE: {:.4f}%'.format(param, df[col2].mean()))
+    print('{} is better than {} in {} server traces'.format(col2.upper(), col1.upper(), df[df[col2] >= df[col1]].shape[0]))
 
-    bins = np.arange(start = -100, stop = 120, step = 20)
+    lower = min(df[col1].min(), df[col2].min())
+    upper = max(df[col1].max(), df[col2].max())
+    print(lower, upper)
+    bins = np.linspace(start = lower, stop = upper, num = 21)
     d1, centers = np.histogram(df[col1], bins)
     d2, centers = np.histogram(df[col2], bins)
     centers = (centers[1:] + centers[:-1]) / 2
