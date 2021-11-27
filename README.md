@@ -28,6 +28,10 @@ $ ./run.sh -br ../traces ltage ltage_binary ltage_results
 # Example :
 $ python3 generate_results.py ./tage ./ltage ./hashed_perceptron ./results
 ```
+- To generate plots run:
+```
+$ python3 generate_accuracy_plots.py 
+```
 # Code Structure
 
 Since the implementation is made specific to Champsim simulator, the code structure is the same as the source code of Champsim.   
