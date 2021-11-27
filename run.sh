@@ -10,7 +10,7 @@ done
 
 shift $(($OPTIND - 1))
 
-if [ -z $1 || -z $2 ]
+if [[ -z $1 || -z $2 ]]
 then
     echo "Usage : ./run.sh [-b BUILD] [-r RUN] [trace_dir] [branch_predictor] [binary_name OPTIONAL] [results_directory OPTIONAL]"
     exit 1
